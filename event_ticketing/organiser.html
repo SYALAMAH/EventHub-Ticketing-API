@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organiser Studio &bull; EventHub</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎭</text></svg>">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(22, 30, 49, 0.75);
+      --card-border: rgba(99, 102, 241, 0.2);
+      --card-hover: rgba(30, 41, 67, 0.9);
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --accent: #f59e0b;
+      --success: #10b981;
+      --danger: #ef4444;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --input-bg: rgba(15, 23, 42, 0.85);
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(circle at 10% 20%, #111827 0%, #090d16 90%);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 12px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); }
+    .brand-icon { font-size: 1.8rem; }
+    .brand h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.5px; }
+    .brand span {
+      font-size: 0.75rem;
+      color: #fbbf24;
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-left: 6px;
+      font-weight: 700;
+    }
+    nav.nav-tabs { display: flex; gap: 8px; }
+    .tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover { color: var(--text); background: rgba(255, 255, 255, 0.05); }
+    .tab-btn.active { color: #fff; background: var(--primary); }
+
+    .user-info-bar { display: flex; align-items: center; gap: 12px; }
+    .role-badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-accent { background: #06b6d4; color: #fff; }
+    .btn-outline { background: transparent; border: 1px solid var(--card-border); color: var(--text); }
+    .btn-outline:hover { background: rgba(255, 255, 255, 0.05); }
+    .btn-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .btn-danger:hover { background: var(--danger); color: #fff; }
+    .btn-sm { padding: 4px 10px; font-size: 0.8rem; }
+
+    main {
+      flex: 1;
+      padding: 28px;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .hero-banner {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(99, 102, 241, 0.08));
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 20px 28px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .hero-text h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; }
+    .hero-text p { color: var(--text-muted); font-size: 0.88rem; }
+
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .kpi-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 18px; }
+    .kpi-label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; }
+    .kpi-value { font-size: 1.6rem; font-weight: 800; color: #fff; }
+
+    .table-container {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      overflow-x: auto;
+      margin-top: 14px;
+    }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
+    th {
+      background: rgba(255, 255, 255, 0.04);
+      padding: 12px 16px;
+      font-weight: 700;
+      color: #94a3b8;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      white-space: nowrap;
+    }
+    td { padding: 14px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: #e2e8f0; vertical-align: middle; }
+    tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: #111827;
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 28px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 14px;
+      margin-bottom: 18px;
+    }
+    .modal-close { background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
+    .modal-close:hover { color: #fff; }
+
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 0.82rem; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      outline: none;
+      font-family: inherit;
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e293b;
+      border: 1px solid var(--card-border);
+      color: #fff;
+      padding: 14px 20px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      z-index: 9999;
+    }
+    .toast-success { border-color: rgba(16, 185, 129, 0.5); }
+    .toast-error { border-color: rgba(239, 68, 68, 0.5); }
+
+    .spinner {
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top: 3px solid var(--primary);
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 16px 28px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      background: rgba(15, 23, 42, 0.6);
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="organiser.html" class="brand">
+      <div class="brand-icon">🎭</div>
+      <div>
+        <h1>EventHub <span>ORGANISER STUDIO</span></h1>
+      </div>
+    </a>
+
+    <nav class="nav-tabs">
+      <button class="tab-btn active" id="tabEventsBtn" onclick="switchOrganiserTab('eventsSection')">📅 My Hosted Events</button>
+      <button class="tab-btn" id="tabBookingsBtn" onclick="switchOrganiserTab('bookingsSection')">👥 Event Attendees</button>
+      <button class="tab-btn" id="tabScannerBtn" onclick="switchOrganiserTab('scannerSection')">📷 Gate Scanner</button>
+    </nav>
+
+    <div class="user-info-bar">
+      <span class="role-badge">ORGANISER</span>
+      <span style="font-size:0.88rem; font-weight:600;" id="navOrganiserName">Aina Rahman</span>
+      <button class="btn btn-danger btn-sm" onclick="logoutOrganiser()">🚪 Sign Out</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero-banner">
+      <div class="hero-text">
+        <h2 id="orgWelcomeGreeting">Welcome to Organiser Event Studio</h2>
+        <p>Publish events, manage ticket capacities, monitor bookings, and verify admission passes at checkpoints.</p>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-accent" onclick="switchOrganiserTab('scannerSection')">📷 Gate Scanner</button>
+        <button class="btn btn-primary" onclick="openCreateEventModal()">➕ Create New Event</button>
+      </div>
+    </section>
+
+    <!-- KPI Metric Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Hosted Events</div>
+        <div class="kpi-value" id="kpiMyEvents">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Tickets Available</div>
+        <div class="kpi-value" id="kpiMyAvailTickets">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Tickets Sold</div>
+        <div class="kpi-value" id="kpiMySoldTickets">0</div>
+      </div>
+    </div>
+
+    <!-- SECTION 1: MY HOSTED EVENTS -->
+    <section id="eventsSection" class="tab-content active">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
+        <div>
+          <h2>My Hosted Events</h2>
+          <p style="color:var(--text-muted); font-size:0.88rem;">Events hosted under your organiser account.</p>
+        </div>
+        <button class="btn btn-outline" onclick="loadOrganiserEvents()">🔄 Refresh</button>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Event Title</th>
+              <th>Category</th>
+              <th>Venue</th>
+              <th>Date &amp; Time</th>
+              <th>Price</th>
+              <th>Availability</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="orgEventsTableBody">
+            <tr><td colspan="9" style="text-align:center; padding:30px;"><div class="spinner"></div> Loading events...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 2: ATTENDEES & BOOKINGS -->
+    <section id="bookingsSection" class="tab-content">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
+        <div>
+          <h2>Event Bookings &amp; Attendee Roster</h2>
+          <p style="color:var(--text-muted); font-size:0.88rem;">Customer reservations placed for your hosted events.</p>
+        </div>
+        <button class="btn btn-outline" onclick="loadOrganiserBookings()">🔄 Refresh</button>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Booking ID</th>
+              <th>Attendee Name &amp; Contact</th>
+              <th>Event</th>
+              <th>Tickets</th>
+              <th>Total Paid</th>
+              <th>Status</th>
+              <th>Ticket Code</th>
+            </tr>
+          </thead>
+          <tbody id="orgBookingsTableBody">
+            <tr><td colspan="7" style="text-align:center; padding:30px;"><div class="spinner"></div> Loading attendees...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 3: GATE SCANNER -->
+    <section id="scannerSection" class="tab-content">
+      <div style="max-width: 600px; margin: 0 auto; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 28px;">
+        <h2 style="margin-bottom: 8px;">📷 Admission Gate Ticket Scanner</h2>
+        <p style="color:var(--text-muted); font-size:0.88rem; margin-bottom: 20px;">Scan or type the attendee's ticket code to verify authentic passes before entry.</p>
+
+        <form onsubmit="verifyTicket(event)">
+          <div class="form-group">
+            <label>Scan or Enter Ticket Code</label>
+            <input type="text" id="scanTicketInput" placeholder="e.g. TKT001 or TKT-XXXX" required style="font-family:monospace; font-size:1.15rem; text-transform:uppercase;">
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%; padding:12px;">🔍 Verify &amp; Admit Attendee</button>
+        </form>
+
+        <div id="scanResultArea" style="margin-top:20px; display:none;"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- CREATE / EDIT EVENT MODAL -->
+  <div class="modal-overlay" id="eventModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="eventModalTitle">Create New Event</h3>
+        <button class="modal-close" onclick="closeModal('eventModal')">&times;</button>
+      </div>
+      <form id="eventForm" onsubmit="submitEvent(event)">
+        <input type="hidden" id="formEventId">
+
+        <div class="form-group">
+          <label>Event Title</label>
+          <input type="text" id="formEventName" placeholder="e.g. National Cyber Security Summit" required>
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="formEventDesc" rows="3" placeholder="Brief event itinerary, speakers, and schedule..." required></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Category</label>
+            <select id="formEventCategory" required></select>
+          </div>
+          <div class="form-group">
+            <label>Venue</label>
+            <select id="formEventVenue" required></select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Event Date</label>
+            <input type="date" id="formEventDate" required>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="formEventStatus">
+              <option value="published">Published</option>
+              <option value="draft">Draft</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Start Time</label>
+            <input type="time" id="formStartTime" value="09:00" required>
+          </div>
+          <div class="form-group">
+            <label>End Time</label>
+            <input type="time" id="formEndTime" value="17:00" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Ticket Price (RM)</label>
+            <input type="number" id="formTicketPrice" min="0" step="0.50" value="50.00" required>
+          </div>
+          <div class="form-group">
+            <label>Total Tickets</label>
+            <input type="number" id="formTotalTickets" min="1" value="500" required>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+          <button type="button" class="btn btn-outline" onclick="closeModal('eventModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveEvent">Save Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toastArea"></div>
+
+  <footer>
+    <p>&copy; 2026 EventHub. All rights reserved.</p>
+  </footer>
+
+  <script>
+    const API_BASE_URL = localStorage.getItem("eventhub_api_url") || "http://127.0.0.1:8000/api";
+    let token = localStorage.getItem("eventhub_token");
+    let user = null;
+    let allCategories = [];
+    let allVenues = [];
+
+    // Security Gatekeeper Check (Organiser or Admin only)
+    (function enforceOrganiserAuth() {
+      const userStr = localStorage.getItem("eventhub_user");
+      if (!token || !userStr) {
+        alert("Authentication required. Please sign in to access Organiser Studio.");
+        window.location.href = "index.html";
+        return;
+      }
+      try {
+        user = JSON.parse(userStr);
+        if (user.role === "customer") {
+          alert("Access Denied: You are signed in as a Customer. Organiser privileges required.");
+          window.location.href = "customer.html";
+        }
+      } catch (e) {
+        window.location.href = "index.html";
+      }
+    })();
+
+    window.addEventListener("DOMContentLoaded", async () => {
+      document.getElementById("navOrganiserName").textContent = `${user.full_name} (${user.email})`;
+      document.getElementById("orgWelcomeGreeting").innerHTML = `Welcome back, <b>${user.full_name}</b>`;
+      await loadCategoriesAndVenues();
+      await loadOrganiserEvents();
+    });
+
+    function logoutOrganiser() {
+      localStorage.removeItem("eventhub_token");
+      localStorage.removeItem("eventhub_user");
+      window.location.href = "index.html";
+    }
+
+    function switchOrganiserTab(tabId) {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+      document.getElementById(tabId).classList.add("active");
+      if (tabId === "eventsSection") document.getElementById("tabEventsBtn").classList.add("active");
+      if (tabId === "bookingsSection") {
+        document.getElementById("tabBookingsBtn").classList.add("active");
+        loadOrganiserBookings();
+      }
+      if (tabId === "scannerSection") document.getElementById("tabScannerBtn").classList.add("active");
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add("active"); }
+    function closeModal(id) { document.getElementById(id).classList.remove("active"); }
+
+    function showToast(msg, type = "success") {
+      const area = document.getElementById("toastArea");
+      const t = document.createElement("div");
+      t.className = `toast toast-${type}`;
+      t.innerHTML = `${type === 'success' ? '✅' : '⚠️'} ${msg}`;
+      area.appendChild(t);
+      setTimeout(() => t.remove(), 4000);
+    }
+
+    async function authFetch(endpoint, opts = {}) {
+      const headers = { "Accept": "application/json", ...(opts.headers || {}) };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      if (opts.body && typeof opts.body === "object") {
+        headers["Content-Type"] = "application/json";
+        opts.body = JSON.stringify(opts.body);
+      }
+      return fetch(`${API_BASE_URL}${endpoint}`, { ...opts, headers });
+    }
+
+    async function loadCategoriesAndVenues() {
+      try {
+        const [catRes, venRes] = await Promise.all([
+          authFetch("/categories"),
+          authFetch("/venues?limit=100")
+        ]);
+        if (catRes.ok) {
+          allCategories = (await catRes.json()).data || [];
+          const sel = document.getElementById("formEventCategory");
+          sel.innerHTML = `<option value="">Select Category</option>`;
+          allCategories.forEach(c => sel.innerHTML += `<option value="${c.category_id}">${c.category_name}</option>`);
+        }
+        if (venRes.ok) {
+          allVenues = (await venRes.json()).data || [];
+          const sel = document.getElementById("formEventVenue");
+          sel.innerHTML = `<option value="">Select Venue</option>`;
+          allVenues.forEach(v => sel.innerHTML += `<option value="${v.venue_id}">${v.venue_name} (Cap: ${v.capacity})</option>`);
+        }
+      } catch (e) {}
+    }
+
+    async function loadOrganiserEvents() {
+      const tbody = document.getElementById("orgEventsTableBody");
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:30px;"><div class="spinner"></div> Loading your hosted events...</td></tr>`;
+
+      try {
+        const res = await authFetch("/events?limit=50");
+        const list = (await res.json()).data || [];
+        const myEvents = user.role === "admin" ? list : list.filter(e => e.organiser_id === user.user_id);
+
+        let totalAvail = 0;
+        let totalSold = 0;
+        myEvents.forEach(e => {
+          totalAvail += e.available_tickets;
+          totalSold += (e.total_tickets - e.available_tickets);
+        });
+        document.getElementById("kpiMyEvents").textContent = myEvents.length;
+        document.getElementById("kpiMyAvailTickets").textContent = totalAvail;
+        document.getElementById("kpiMySoldTickets").textContent = totalSold;
+
+        if (myEvents.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">You have not created any events yet. Click 'Create New Event' to publish one!</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = myEvents.map(e => `
+          <tr>
+            <td><b>#${e.event_id}</b></td>
+            <td><b>${e.event_name}</b></td>
+            <td>${e.category_name}</td>
+            <td>${e.venue_name}</td>
+            <td>${e.event_date}<br/><small style="color:var(--text-muted);">${e.start_time} - ${e.end_time}</small></td>
+            <td>RM ${parseFloat(e.ticket_price).toFixed(2)}</td>
+            <td>${e.available_tickets} / ${e.total_tickets}</td>
+            <td><span class="role-badge" style="background:rgba(99,102,241,0.2); color:#a5b4fc;">${e.event_status.toUpperCase()}</span></td>
+            <td>
+              <div style="display:flex; gap:6px;">
+                <button class="btn btn-sm btn-outline" onclick="openEditEventModal(${JSON.stringify(e).replace(/"/g, '&quot;')})">✏️ Edit</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteEvent(${e.event_id}, '${e.event_name}')">🗑️</button>
+              </div>
+            </td>
+          </tr>
+        `).join("");
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="9" style="color:#f87171; text-align:center;">Failed to load events.</td></tr>`;
+      }
+    }
+
+    function openCreateEventModal() {
+      document.getElementById("eventModalTitle").textContent = "Create New Event";
+      document.getElementById("formEventId").value = "";
+      document.getElementById("formEventName").value = "";
+      document.getElementById("formEventDesc").value = "";
+      document.getElementById("formEventDate").value = new Date().toISOString().split("T")[0];
+      document.getElementById("formStartTime").value = "09:00";
+      document.getElementById("formEndTime").value = "17:00";
+      document.getElementById("formTicketPrice").value = "50.00";
+      document.getElementById("formTotalTickets").value = "500";
+      document.getElementById("formEventStatus").value = "published";
+      openModal("eventModal");
+    }
+
+    function openEditEventModal(e) {
+      document.getElementById("eventModalTitle").textContent = `Edit Event #${e.event_id}`;
+      document.getElementById("formEventId").value = e.event_id;
+      document.getElementById("formEventName").value = e.event_name;
+      document.getElementById("formEventDesc").value = e.description || "";
+      document.getElementById("formEventCategory").value = e.category_id;
+      document.getElementById("formEventVenue").value = e.venue_id;
+      document.getElementById("formEventDate").value = e.event_date;
+      document.getElementById("formStartTime").value = e.start_time.substring(0, 5);
+      document.getElementById("formEndTime").value = e.end_time.substring(0, 5);
+      document.getElementById("formTicketPrice").value = e.ticket_price;
+      document.getElementById("formTotalTickets").value = e.total_tickets;
+      document.getElementById("formEventStatus").value = e.event_status;
+      openModal("eventModal");
+    }
+
+    async function submitEvent(e) {
+      e.preventDefault();
+      const id = document.getElementById("formEventId").value;
+      const isEdit = Boolean(id);
+
+      const payload = {
+        event_name: document.getElementById("formEventName").value.trim(),
+        description: document.getElementById("formEventDesc").value.trim(),
+        category_id: parseInt(document.getElementById("formEventCategory").value),
+        venue_id: parseInt(document.getElementById("formEventVenue").value),
+        event_date: document.getElementById("formEventDate").value,
+        start_time: document.getElementById("formStartTime").value + ":00",
+        end_time: document.getElementById("formEndTime").value + ":00",
+        ticket_price: parseFloat(document.getElementById("formTicketPrice").value),
+        total_tickets: parseInt(document.getElementById("formTotalTickets").value),
+        event_status: document.getElementById("formEventStatus").value
+      };
+
+      try {
+        const res = await authFetch(isEdit ? `/events/${id}` : "/events", {
+          method: isEdit ? "PUT" : "POST",
+          body: payload
+        });
+        const json = await res.json();
+        if (res.ok) {
+          closeModal("eventModal");
+          showToast(isEdit ? "Event updated successfully!" : "Event published successfully!", "success");
+          await loadOrganiserEvents();
+        } else {
+          showToast(json.error ? json.error.message : "Failed to save event", "error");
+        }
+      } catch (err) {
+        showToast("Error: " + err.message, "error");
+      }
+    }
+
+    async function deleteEvent(id, title) {
+      if (!confirm(`Are you sure you want to delete or cancel '${title}'?`)) return;
+      try {
+        const res = await authFetch(`/events/${id}`, { method: "DELETE" });
+        if (res.ok) {
+          showToast(`Event deleted.`, "success");
+          await loadOrganiserEvents();
+        }
+      } catch (e) {
+        showToast("Error deleting event: " + e.message, "error");
+      }
+    }
+
+    async function loadOrganiserBookings() {
+      const tbody = document.getElementById("orgBookingsTableBody");
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px;"><div class="spinner"></div> Loading attendees...</td></tr>`;
+
+      try {
+        const res = await authFetch("/bookings?limit=100");
+        const list = (await res.json()).data || [];
+
+        if (list.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">No bookings placed for your events yet.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = list.map(b => `
+          <tr>
+            <td><b>#${b.booking_id}</b></td>
+            <td><b>${b.customer_name}</b><br/><small style="color:var(--text-muted);">${b.customer_email}</small></td>
+            <td>${b.event_name}</td>
+            <td>${b.quantity} Ticket(s)</td>
+            <td>RM ${parseFloat(b.total_amount).toFixed(2)}</td>
+            <td><span class="role-badge" style="background:${b.booking_status === 'confirmed' ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}; color:${b.booking_status === 'confirmed' ? '#34d399' : '#f87171'};">${b.booking_status.toUpperCase()}</span></td>
+            <td><code style="background:rgba(0,0,0,0.4); padding:3px 6px; border-radius:4px; color:var(--accent);">${b.ticket_code || '-'}</code></td>
+          </tr>
+        `).join("");
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="7" style="color:#f87171; text-align:center;">Failed to load attendees.</td></tr>`;
+      }
+    }
+
+    async function verifyTicket(e) {
+      e.preventDefault();
+      const code = document.getElementById("scanTicketInput").value.trim();
+      const area = document.getElementById("scanResultArea");
+      area.style.display = "block";
+      area.innerHTML = `<div class="spinner"></div> Verifying with database...`;
+
+      try {
+        const res = await authFetch("/bookings/verify-ticket", { method: "POST", body: { code } });
+        const json = await res.json();
+        if (res.ok) {
+          const b = json.data;
+          const isValid = json.valid;
+          area.innerHTML = `
+            <div style="background:${isValid ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'}; border:1px solid ${isValid ? '#10b981' : '#ef4444'}; border-radius:10px; padding:16px;">
+              <h4 style="color:${isValid ? '#34d399' : '#f87171'}; font-size:1.1rem; margin-bottom:8px;">
+                ${isValid ? '✅ PASSENGER ADMITTED' : '⛔ INVALID TICKET'}
+              </h4>
+              <p><b>Attendee:</b> ${b.customer_name} (${b.customer_email})</p>
+              <p><b>Event:</b> ${b.event_name}</p>
+              <p><b>Tickets:</b> ${b.quantity} Person(s)</p>
+              <p><b>Status:</b> ${b.booking_status.toUpperCase()}</p>
+            </div>
+          `;
+        } else {
+          area.innerHTML = `<div style="background:rgba(239,68,68,0.15); border:1px solid #ef4444; border-radius:10px; padding:16px; color:#f87171;"><h4>⛔ VERIFICATION FAILED</h4><p>${json.error ? json.error.message : 'Ticket not found or unauthorized.'}</p></div>`;
+        }
+      } catch (err) {
+        area.innerHTML = `<p style="color:#f87171;">Scanner error: ${err.message}</p>`;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventHub &bull; Secure Authentication &amp; Portal Gateway</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎟️</text></svg>">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(22, 30, 49, 0.85);
+      --card-border: rgba(99, 102, 241, 0.25);
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --accent: #06b6d4;
+      --success: #10b981;
+      --danger: #ef4444;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --input-bg: rgba(15, 23, 42, 0.9);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(circle at 10% 20%, #111827 0%, #090d16 90%);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    header {
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 14px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text);
+    }
+    .brand-icon { font-size: 1.8rem; }
+    .brand h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.5px; }
+    .brand span {
+      font-size: 0.75rem;
+      color: var(--accent);
+      background: rgba(6, 182, 212, 0.12);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-left: 6px;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+      font-weight: 600;
+    }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981; }
+    .status-dot.offline { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .auth-container {
+      width: 100%;
+      max-width: 460px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      position: relative;
+    }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .auth-header h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 6px; }
+    .auth-header p { color: var(--text-muted); font-size: 0.88rem; }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 20px;
+    }
+    .tab-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      color: #fff;
+      border-bottom-color: var(--primary);
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      color: #fff;
+      padding: 11px 14px;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      outline: none;
+      transition: border 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+
+    .eye-toggle-btn {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      transition: color 0.2s;
+    }
+    .eye-toggle-btn:hover {
+      color: #fff;
+    }
+
+    .input-icon-left {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1rem;
+      line-height: 1;
+      pointer-events: none;
+      user-select: none;
+      z-index: 2;
+      opacity: 0.85;
+    }
+
+    /* Alert Banner */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      margin-bottom: 20px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      line-height: 1.4;
+    }
+    .alert-error {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+    }
+    .alert-success {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #6ee7b7;
+    }
+
+    /* Demo Quick Fill Section */
+    .demo-section {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .demo-section h4 {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    .demo-btn-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .demo-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+    }
+    .demo-btn:hover {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    .demo-btn b { display: block; color: #fff; font-size: 0.82rem; }
+
+    /* Already logged in card */
+    .logged-in-box {
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 20px;
+      text-align: center;
+      display: none;
+    }
+    .logged-in-box h3 { font-size: 1rem; color: #fff; margin-bottom: 4px; }
+    .logged-in-box p { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px; }
+    .logged-in-actions { display: flex; gap: 8px; }
+
+    footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 16px 28px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      background: rgba(15, 23, 42, 0.6);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="brand">
+      <div class="brand-icon">🎟️</div>
+      <div>
+        <h1>EventHub Portal <span>Authentication Gateway</span></h1>
+      </div>
+    </a>
+    <div class="status-badge" id="apiStatusBadge">
+      <div class="status-dot" id="apiStatusDot"></div>
+      <span id="apiStatusText">Checking API...</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="auth-container">
+      
+      <!-- Current Session Prompt (if logged in) -->
+      <div class="logged-in-box" id="loggedInBox">
+        <h3 id="loggedUserGreeting">Currently Signed In</h3>
+        <p id="loggedUserDetail"></p>
+        <div class="logged-in-actions">
+          <button class="btn btn-primary" onclick="proceedToUserPortal()" style="flex:2;">➡️ Enter Portal</button>
+          <button class="btn" onclick="performLogout()" style="flex:1; background:rgba(239,68,68,0.2); color:#fca5a5; border:1px solid rgba(239,68,68,0.3);">Sign Out</button>
+        </div>
+      </div>
+
+      <div class="auth-header">
+        <h2>Sign In</h2>
+      </div>
+
+      <!-- Feedback Alert -->
+      <div class="alert" id="authAlert"></div>
+
+      <!-- Auth Tabs: Login vs Register -->
+      <div class="tabs">
+        <button class="tab-btn active" id="tabLoginBtn" onclick="switchAuthTab('login')">Sign In</button>
+        <button class="tab-btn" id="tabRegisterBtn" onclick="switchAuthTab('register')">Create Account</button>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>Email Address</label>
+          <div style="position:relative;">
+            <span class="input-icon-left">👤</span>
+            <input type="email" id="loginEmail" placeholder="Email" required style="padding-left:42px;">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Password</label>
+          <div style="position:relative;">
+            <span class="input-icon-left">🔒</span>
+            <input type="password" id="loginPassword" placeholder="Password" required style="padding-left:42px; padding-right:44px;">
+            <button type="button" class="eye-toggle-btn" onclick="togglePasswordVisibility('loginPassword', this)" title="Show password (click to open eye)" aria-label="Toggle password visibility">
+              <svg viewBox="0 0 32 32" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 14c4 7 20 7 24 0"/>
+                <line x1="16" y1="18" x2="16" y2="25"/>
+                <line x1="10" y1="17" x2="7" y2="23"/>
+                <line x1="22" y1="17" x2="25" y2="23"/>
+                <line x1="6" y1="14" x2="3" y2="19"/>
+                <line x1="26" y1="14" x2="29" y2="19"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="btnLoginSubmit">
+          <span>Sign In</span>
+        </button>
+      </form>
+
+      <!-- REGISTER FORM -->
+      <form id="registerForm" onsubmit="handleRegister(event)" style="display:none;">
+        <div class="form-group">
+          <label>Full Name</label>
+          <div style="position:relative;">
+            <span class="input-icon-left">👤</span>
+            <input type="text" id="regName" placeholder="Full Name" required style="padding-left:42px;">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Email Address</label>
+          <div style="position:relative;">
+            <span class="input-icon-left">👤</span>
+            <input type="email" id="regEmail" placeholder="Email" required style="padding-left:42px;">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Password</label>
+          <div style="position:relative;">
+            <span class="input-icon-left">🔒</span>
+            <input type="password" id="regPassword" placeholder="Password" minlength="6" required style="padding-left:42px; padding-right:44px;">
+            <button type="button" class="eye-toggle-btn" onclick="togglePasswordVisibility('regPassword', this)" title="Show password (click to open eye)" aria-label="Toggle password visibility">
+              <svg viewBox="0 0 32 32" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 14c4 7 20 7 24 0"/>
+                <line x1="16" y1="18" x2="16" y2="25"/>
+                <line x1="10" y1="17" x2="7" y2="23"/>
+                <line x1="22" y1="17" x2="25" y2="23"/>
+                <line x1="6" y1="14" x2="3" y2="19"/>
+                <line x1="26" y1="14" x2="29" y2="19"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Account Role</label>
+          <select id="regRole" required>
+            <option value="customer">🎟️ Customer (Browse &amp; Book Tickets)</option>
+            <option value="organiser">🎭 Organiser (Host &amp; Manage Events)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Phone Number (Optional)</label>
+          <input type="text" id="regPhone" placeholder="e.g. 0123456789">
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="btnRegisterSubmit">
+          <span>Create Account</span>
+        </button>
+      </form>
+
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 EventHub. All rights reserved.</p>
+  </footer>
+
+  <script>
+    const API_BASE_URL = localStorage.getItem("eventhub_api_url") || "http://127.0.0.1:8000/api";
+
+    window.addEventListener("DOMContentLoaded", () => {
+      checkServerHealth();
+      checkExistingSession();
+    });
+
+    async function checkServerHealth() {
+      const badge = document.getElementById("apiStatusBadge");
+      const dot = document.getElementById("apiStatusDot");
+      const text = document.getElementById("apiStatusText");
+      try {
+        const res = await fetch(`${API_BASE_URL}/stats/health`);
+        if (res.ok) {
+          dot.className = "status-dot";
+          text.textContent = "REST API Online (Port 8000)";
+        } else {
+          throw new Error("HTTP " + res.status);
+        }
+      } catch (e) {
+        dot.className = "status-dot offline";
+        text.textContent = "REST API Offline (Start in PowerShell)";
+        badge.style.borderColor = "rgba(239, 68, 68, 0.4)";
+        badge.style.color = "#f87171";
+      }
+    }
+
+    const SVG_EYE_CLOSED = `<svg viewBox="0 0 32 32" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14c4 7 20 7 24 0"/><line x1="16" y1="18" x2="16" y2="25"/><line x1="10" y1="17" x2="7" y2="23"/><line x1="22" y1="17" x2="25" y2="23"/><line x1="6" y1="14" x2="3" y2="19"/><line x1="26" y1="14" x2="29" y2="19"/></svg>`;
+
+    const SVG_EYE_OPEN = `<svg viewBox="0 0 32 32" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 16s5-10 14-10 14 10 14 10-5 10-14 10-14-10-14-10z"/><circle cx="16" cy="16" r="6" stroke="currentColor" stroke-width="2"/><circle cx="16" cy="16" r="3" fill="currentColor"/></svg>`;
+
+    function togglePasswordVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (input.type === "password") {
+        input.type = "text";
+        btn.innerHTML = SVG_EYE_OPEN;
+        btn.title = "Hide password (click to close eye)";
+      } else {
+        input.type = "password";
+        btn.innerHTML = SVG_EYE_CLOSED;
+        btn.title = "Show password (click to open eye)";
+      }
+    }
+
+    function checkExistingSession() {
+      const token = localStorage.getItem("eventhub_token");
+      const userStr = localStorage.getItem("eventhub_user");
+      if (token && userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          document.getElementById("loggedInBox").style.display = "block";
+          document.getElementById("loggedUserGreeting").textContent = `Active Session: ${user.full_name}`;
+          document.getElementById("loggedUserDetail").textContent = `Signed in as ${user.email} (${user.role.toUpperCase()})`;
+        } catch (e) {}
+      }
+    }
+
+    function proceedToUserPortal() {
+      const user = JSON.parse(localStorage.getItem("eventhub_user") || "{}");
+      redirectForRole(user.role);
+    }
+
+    function performLogout() {
+      localStorage.removeItem("eventhub_token");
+      localStorage.removeItem("eventhub_user");
+      document.getElementById("loggedInBox").style.display = "none";
+      showAlert("You have successfully signed out.", "success");
+    }
+
+    function switchAuthTab(tab) {
+      const loginForm = document.getElementById("loginForm");
+      const regForm = document.getElementById("registerForm");
+      const tabLoginBtn = document.getElementById("tabLoginBtn");
+      const tabRegBtn = document.getElementById("tabRegisterBtn");
+      clearAlert();
+
+      if (tab === "login") {
+        loginForm.style.display = "block";
+        regForm.style.display = "none";
+        tabLoginBtn.classList.add("active");
+        tabRegBtn.classList.remove("active");
+      } else {
+        loginForm.style.display = "none";
+        regForm.style.display = "block";
+        tabLoginBtn.classList.remove("active");
+        tabRegBtn.classList.add("active");
+      }
+    }
+
+    function showAlert(msg, type = "error") {
+      const el = document.getElementById("authAlert");
+      el.className = `alert alert-${type}`;
+      el.style.display = "flex";
+      el.innerHTML = `<span>${type === 'error' ? '⛔' : '✅'}</span> <div>${msg}</div>`;
+    }
+
+    function clearAlert() {
+      const el = document.getElementById("authAlert");
+      el.style.display = "none";
+    }
+
+    function redirectForRole(role) {
+      if (role === "admin") {
+        window.location.href = "admin.html";
+      } else if (role === "organiser") {
+        window.location.href = "organiser.html";
+      } else {
+        window.location.href = "customer.html";
+      }
+    }
+
+    async function handleLogin(e) {
+      if (e) e.preventDefault();
+      clearAlert();
+
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value.trim();
+      const btn = document.getElementById("btnLoginSubmit");
+      btn.disabled = true;
+      btn.innerHTML = "Authenticating...";
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          showAlert("Authentication verified! Redirecting to your portal...", "success");
+          localStorage.setItem("eventhub_token", data.data.access_token);
+          localStorage.setItem("eventhub_user", JSON.stringify(data.data.user));
+
+          setTimeout(() => {
+            redirectForRole(data.data.user.role);
+          }, 600);
+        } else {
+          const errMsg = data.error ? data.error.message : "Access Denied: Invalid email or password credentials.";
+          showAlert(`<b>Access Denied:</b> ${errMsg}`, "error");
+        }
+      } catch (err) {
+        showAlert("Cannot reach the REST API server on port 8000. Please start the server on PowerShell: <code>python -m uvicorn backend.main:app --reload</code>", "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = "Sign In";
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      clearAlert();
+
+      const fullName = document.getElementById("regName").value.trim();
+      const email = document.getElementById("regEmail").value.trim();
+      const password = document.getElementById("regPassword").value;
+      const role = document.getElementById("regRole").value;
+      const phone = document.getElementById("regPhone").value.trim();
+
+      const btn = document.getElementById("btnRegisterSubmit");
+      btn.disabled = true;
+      btn.innerHTML = "Creating account...";
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/auth/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            full_name: fullName,
+            email,
+            password,
+            role,
+            phone: phone || null
+          })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          showAlert(`Account registered successfully as ${role.toUpperCase()}! Redirecting to portal...`, "success");
+          localStorage.setItem("eventhub_token", data.data.access_token);
+          localStorage.setItem("eventhub_user", JSON.stringify(data.data.user));
+
+          setTimeout(() => {
+            redirectForRole(data.data.user.role);
+          }, 700);
+        } else {
+          showAlert(data.error ? data.error.message : "Registration failed", "error");
+        }
+      } catch (err) {
+        showAlert("Connection error: " + err.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = "Create New Account";
+      }
+    }
+  </script>
+</body>
+</html>
